@@ -32,6 +32,7 @@ function custom_setup() {
   pad.marker_created = function (id) {seq.add_row();};
   
   matrix = new MatrixCtrl("400px","200px",16,8);
+  //xy_pad = new PictSlider("200px","200px",() => {});
   
   // TOP
   midi_div = document.createElement("div");
@@ -49,7 +50,8 @@ function custom_setup() {
   gui.appendChild(mid_container);
 
   mid_container.appendChild(pad.pad);
-  //mid_container.appendChild(seq.container);
+  mid_container.appendChild(seq.container);
+  //mid_container.appendChild(xy_pad.html());
   mid_container.appendChild(matrix.html());
   
   // BOTTOM
