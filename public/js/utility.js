@@ -11,3 +11,7 @@ function reshape (list,width) {
   while(list.length) reshaped.push(list.splice(0,width));
   return reshaped;
 }
+
+function lerp (start, end, amt){
+  return (1-amt)*start+amt*end;
+}

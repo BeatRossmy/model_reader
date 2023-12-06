@@ -77,6 +77,10 @@ class Seq_Event {
     //this.html.removeEventListener("mouseup",this.remove);
     this.parent.event_grid.removeChild(this.html);
   }
+
+  static lerp_values (a,b,amt) {
+    return {x: lerp(a.x,b.x,amt), y: lerp(a.y,b.y,amt)};
+  }
 }
 
 
@@ -99,6 +103,8 @@ class Step_Sequencer {
     this.selected_event = null;
     this.selected_handle = null;
     this.edited = false;
+
+    this.active_events = [];
     
     this.container = createClassElement("div","seq_container");
     
@@ -268,6 +274,29 @@ class Step_Sequencer {
   read (t) {
     t = t%this.columns;
     let current_events = this.events.filter((e) => e.x==t);
-    for (let e of current_events) this.event_callback(e);
+
+    // remove non-active elements
+    this.active_events = this.active_events.filter((a) => a.element.x<=t && a.end>t)
+
+    for (let e of current_events) {
+      let contains = this.active_events.filter((a) => a.element.x==e.x && a.element.y==e.y).length>0;
+      if (!contains) {
+        this.active_events.push({trigger_time: t, end: t+e.length, element:e});  
+      }
+      //console.log(this.active_events);
+    }
+
+    this.active_events = this.active_events.sort((a,b) => Math.sign(a.element.y-b.element.y));
+
+    this.active_event = this.active_events[0];
+
+    if (this.active_event) {
+      this.event_callback(this.active_event.element);
+      console.log(this.active_event.element);
+    }
+
+    /*for (let e of current_events) {
+      this.event_callback(e);
+    }*/
   }
 }
