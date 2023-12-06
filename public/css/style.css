@@ -1,0 +1,401 @@
+html,body {
+  --background: rgb(80,80,80);
+  --default: rgb(130,130,130);
+  --default_highlight: rgb(155,155,155);
+  --active: rgb(230,230,230);
+  --active_highlight: rgb(255,255,255);
+  --note: rgb(254, 209, 52);
+  --note_highlight: rgb(255, 220, 132);
+  
+  --active: rgb(210,228,231);
+  --inactive: rgb(83,83,83);
+  --bg: rgb(51,51,51);
+  
+  margin: 0;
+  padding: 0;
+  background-color: var(--background);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 1rem;
+  color: var(--default);
+}
+
+p {
+  font-size: 1rem;
+}
+
+.info {
+  width: 100vw;
+  text-align: center;
+  margin: 0;
+}
+
+/*=================*/
+/***  CONTAINER  ***/
+/*=================*/
+
+.gui_container, .gui_container * {
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+.gui_container * {
+  margin: 0;
+  display: flex;
+  column-gap: 0.5rem;
+  justify-content: center;
+}
+
+/*============*/
+/***  GUI   ***/
+/*============*/
+
+.midi_div {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+.gui {
+  width: 100svw;
+  height: 100svh;
+  
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 2fr 1fr;
+  justify-items: center;
+  align-items: center;
+}
+.top, .middle, .bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem 0;
+  row-gap: 0.8rem;
+  column-gap: 0.5rem;
+}
+
+svg {
+  background-color: var(--default);
+}
+circle {
+  color: var(--default_highlight);
+}
+
+/*=============*/
+/***  XYPad  ***/
+/*=============*/
+
+.pad {
+  position: relative;
+  background-color: var(--default);
+}
+
+.marker {
+  border-radius: 50%;
+  position: absolute;
+  background-color: var(--default_highlight);
+  cursor: grab;
+}
+
+.marker_label {
+  margin: 25% 0%;
+  padding: auto;
+  text-align: center;
+  width: 100%;
+  height: 50%;
+  user-select: none;
+  font-size: 0.5em;
+}
+
+/*=============*/
+/***  PictSlider   ***/
+/*=============*/
+
+.grabbable {
+  cursor: grab;
+}
+
+.node {
+  position: absolute;
+  border-radius: 50%;
+  border: 0.25em solid var(--active);
+}
+
+.pict_slider {
+  background-color: var(--bg);
+  padding: 0.25em;
+  position: relative;
+}
+
+.pict_slider_handle {
+  width: 1.5em;
+  height: 1.5em;
+  position: absolute;
+  border-radius: 50%;
+  border: 0.25em solid var(--active);
+  pointer-events: none;
+}
+
+/*=============*/
+/***  Matrix   ***/
+/*=============*/
+
+.matrix {
+  display: grid;
+  grid-gap: 0.25em;
+  padding: 0.25em;
+  background-color: var(--bg);
+}
+
+.matrix_cell {
+  border-radius: 50%;
+  display: inline-block;
+  background-color: color-mix(in srgb, var(--active) var(--state), var(--inactive));
+}
+.matrix_cell.highlighted {
+  --inactive: rgb(111,111,111);
+}
+.matrix_cell.selected {
+  outline: 0.1em solid var(--active);
+}
+
+/*=============*/
+/***  Drop   ***/
+/*=============*/
+
+.droparea {
+  display: table; 
+  outline: dotted;
+  outline-width: 0.2em;
+  outline-color: var(--default);
+}
+
+.droparea > p {
+  text-align:center; 
+  vertical-align: middle;
+  display: table-cell;  
+}
+
+
+
+/*=============*/
+/***  Step Sequencer  ***/
+/*=============*/
+
+
+
+.seq_container {
+  --gap: 0.15em;
+  --columns: 0;
+  --rows: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-gap: 0.25em;
+  padding: 0.25em;
+  background-color: var(--bg);
+}
+
+.seq_grid_raster {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  position: absolute;
+  grid-template-columns: repeat(var(--columns),1fr);
+  grid-template-rows: repeat(var(--rows),1fr);
+  grid-gap: var(--gap);
+}
+
+.seq_grid_raster > div {
+  width: 100%;
+  height: 100%;
+  background-color: var(--inactive);
+}
+
+.seq_labels {
+  width: 50px;
+  height: 200px;
+  background-color: var(--bg);
+  display: grid;
+  grid-template-columns: auto;
+  color: var(--inactive);
+  grid-gap: var(--gap);
+}
+
+.seq_labels > p {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  background-color: var(--active);
+}
+
+.seq_grid_container {
+  overflow: hidden;
+  position: relative;
+}
+
+.mouse_observer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+div.seq_event {
+  background-color: var(--note);
+  position: relative;
+  /*z-index: 9;*/
+  cursor: grab;
+}
+
+.seq_event.selected {
+  background-color: var(--note_highlight);
+}
+
+.seq_event_handle {
+  background-color: var(--bg);
+  width: 0.25em;
+  height: 50%;
+  position: absolute;
+  right: 0.35em;
+  top: 25%;
+  z-index: 10;
+  cursor: col-resize;
+}
+
+.seq_cursor {
+  height: 100%;
+  width: 0.15em;
+  background-color: var(--active);
+  position: absolute;
+  top: 0%;
+  left:0%;
+}
+
+/*============*/
+/***  GRID  ***/
+/*============*/
+
+.grid {
+  --brightness: 0%;
+  --width: 8;
+  --height: 4;
+  --cell-width: clamp(10px,100vw/var(--width),75px);
+  --cell-height: calc(100vh/2/var(--height));
+  --cell-size: clamp(0px,var(--cell-width),var(--cell-height));
+  display: grid;
+  grid-template-columns: repeat(var(--width), auto);
+  grid-template-rows: repeat(var(--height), auto);
+  grid-column-start: 1;
+  grid-row-start: 2;
+}
+.grid_cell {
+  width: calc(var(--cell-size)*0.9);
+  height: calc(var(--cell-size)*0.9);
+  margin: calc(var(--cell-size) * 0.05);
+  border-radius: calc(var(--cell-size) * 0.15);
+  background-color: color-mix(in srgb, var(--default), var(--active) var(--brightness));
+  cursor: pointer;
+}
+.highlight {
+  background-color: color-mix(in srgb, var(--default_highlight), var(--active_highlight) var(--brightness));
+}
+
+/*============*/
+/*** BUTTON ***/
+/*============*/
+
+input[type="button"] {
+  border: 0;
+  background: var(--default);
+  box-shadow: none;
+  text-decoration: none;
+  border-radius: 1.25vw;
+  cursor: pointer;
+  font-family: 'Roboto Mono', monospace;
+  color: var(--active);
+  margin: 0;
+  font-size: 1rem;
+}
+
+input[type="button"]:hover {
+  background: var(--default_highlight);
+}
+
+input[type="button"]:active {
+  background: var(--active);
+  color: var(--active_highlight);
+}
+
+/*============*/
+/*** SLIDER ***/
+/*============*/
+
+.vslider {
+  display: grid;
+  justify-items: center;
+  align-items: center;
+}
+
+.vslider:hover {
+  color: rgb(155,155,155);
+}
+
+.vslider p {
+  margin: 0;
+  padding: 0;
+  font-size: 0.9rem;
+}
+
+.vslider p.name {
+  font-size: 0.8rem;
+}
+
+/*****
+https://www.smashingmagazine.com/2021/12/create-custom-range-input-consistent-browsers/
+*****/
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  width: 1rem;
+  height: 7.5rem;
+  margin: 0.5rem;
+}
+/***** Track Styles *****/
+/***** Chrome, Safari, Opera, and Edge Chromium *****/
+input[type="range"]::-webkit-slider-runnable-track {
+  background: rgb(130,130,130);
+  border-radius: 0.5rem;
+}
+/******** Firefox ********/
+input[type="range"]::-moz-range-track {
+  background: rgb(130,130,130);
+  border-radius: 0.5rem;
+}
+/***** Thumb Styles *****/
+/***** Chrome, Safari, Opera, and Edge Chromium *****/
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  margin-top: 0px; /* Centers thumb on the track */
+  background-color: rgb(155,155,155);
+  height: 1rem;
+  width: 1rem;
+  border-radius:0.5rem;
+}
+/***** Firefox *****/
+input[type="range"]::-moz-range-thumb {
+  border: none; /*Removes extra border that FF applies*/
+  background-color: rgb(155,155,155);
+  height: 1rem;
+  width: 1rem;
+  border-radius:0.5rem;
+}
+input[type=range][orient=vertical]
+{
+  writing-mode: bt-lr; /* IE */
+  -webkit-appearance: slider-vertical; /* Chromium */
+}
