@@ -53,6 +53,10 @@ function custom_setup() {
   mid_container.appendChild(seq.container);
   //mid_container.appendChild(xy_pad.html());
   mid_container.appendChild(matrix.html());
+
+  mod_ui = new Line_Module();
+
+  mid_container.appendChild(mod_ui.html());
   
   // BOTTOM
   controls = document.createElement("div");
@@ -84,6 +88,12 @@ function custom_setup() {
         console.log("connection established:",bus_in,bus_out);
       
         clock = new Clock(bus_in);
+        clock.add_listener(new ClockListener(24, (t) => {
+          t = t%mod_ui.size();
+          mod_ui.highlight(t);
+          let pos = mod_ui.get(t);
+          predict(pos.x,pos.y);
+        }));
         clock.add_listener(new ClockListener(6, (t) => {
           matrix.highlight_column((t+15)%16,false);
           matrix.highlight_column(t%16,true);
@@ -91,6 +101,7 @@ function custom_setup() {
         clock.add_listener(new ClockListener(6,soundLoop));
         clock.add_listener(new ClockListener(1, (t) => {seq.set_playback(t);}));
         clock.add_listener(new ClockListener(24, (t) => {seq.read(t);}));
+        
 
         add_midi_selector();
       })

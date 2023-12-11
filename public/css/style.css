@@ -29,6 +29,44 @@ p {
   margin: 0;
 }
 
+/*==================*/
+/***  MODULAR UI  ***/
+/*==================*/
+
+.ui_container {
+  display: grid;
+}
+
+.ui_container > div {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.svg_layer {
+  background-color: var(--bg);
+}
+
+circle {
+  fill: var(--active);
+  r: 0.2em;
+  cursor: grab;
+}
+
+circle.highlighted {
+  r: 0.4em;
+}
+
+circle:hover {
+  fill: white;
+}
+
+
+
+line {
+  stroke: var(--active);
+  stroke-width: 1;
+}
+
 /*=================*/
 /***  CONTAINER  ***/
 /*=================*/
@@ -119,6 +157,14 @@ circle {
   position: absolute;
   border-radius: 50%;
   border: 0.25em solid var(--active);
+  background-color: transparent;
+}
+.node:hover {
+  background-color: color-mix(in srgb, var(--active) 50%, transparent);
+  cursor: grab;
+}
+.node.selected {
+  background-color: color-mix(in srgb, var(--active) 75%, transparent);
 }
 
 .pict_slider {

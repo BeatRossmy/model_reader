@@ -38,18 +38,19 @@ class Seq_Event {
     this.x = x;
     this.y = y;
     this.length = l;
-    this.parent = p;
     this.html = createClassElement("div","seq_event");
     this.handle = createClassElement("div","seq_event_handle");
     this.html.appendChild(this.handle);
     
     this.handle.addEventListener("mousedown",()=>{
-      this.parent.selected_handle = this;
-      console.log("handle",this);
+      p.selected_handle = this;
     });
     this.handle.addEventListener("mouseup",()=>{
-      this.parent.unselect();
+      p.unselect();
     });
+    this.remove_html = function () {
+      p.event_grid.removeChild(this.html);
+    };
     
     this.update_html();
   }
@@ -70,12 +71,6 @@ class Seq_Event {
   update_html () {
     this.html.style.setProperty("grid-column",(this.x+1) + " / span "+this.length);
     this.html.style.setProperty("grid-row",""+(this.y+1));
-  }
-  
-  remove_html () {
-    //this.html.removeEventListener("mousedown",this.select);
-    //this.html.removeEventListener("mouseup",this.remove);
-    this.parent.event_grid.removeChild(this.html);
   }
 
   static lerp_values (a,b,amt) {
@@ -117,6 +112,8 @@ class Step_Sequencer {
     this.event_grid = createClassElement("div","seq_grid_raster");
     
     this.cursor = createClassElement("div","seq_cursor");
+
+    this.active_event = {x:0,y:0,length:0};
     
     this.observer = new MouseObserver(
       // MOUSE DOWN
@@ -276,27 +273,24 @@ class Step_Sequencer {
     let current_events = this.events.filter((e) => e.x==t);
 
     // remove non-active elements
-    this.active_events = this.active_events.filter((a) => a.element.x<=t && a.end>t)
+    this.active_events = this.active_events.filter((e) => e.x<=t && e.x+e.length>t)
 
     for (let e of current_events) {
-      let contains = this.active_events.filter((a) => a.element.x==e.x && a.element.y==e.y).length>0;
-      if (!contains) {
-        this.active_events.push({trigger_time: t, end: t+e.length, element:e});  
-      }
-      //console.log(this.active_events);
+      let contains = this.active_events.filter((a) => a.x==e.x && a.y==e.y).length>0;
+      if (!contains) 
+        this.active_events.push({x: e.x, y:e.y, length:e.length});
     }
 
-    this.active_events = this.active_events.sort((a,b) => Math.sign(a.element.y-b.element.y));
+    //this.active_events = this.active_events.sort((a,b) => Math.sign(a.y-b.y));
 
-    this.active_event = this.active_events[0];
+    // select newest event
+    let a = this.active_events[this.active_events.length-1];
 
-    if (this.active_event) {
-      this.event_callback(this.active_event.element);
-      console.log(this.active_event.element);
+    if (a && this.active_event.x!=a.x && this.active_event.y!=a.y) {
+      this.active_event = a;
+      this.event_callback(this.active_event);
+      console.log(this.active_event);
     }
-
-    /*for (let e of current_events) {
-      this.event_callback(e);
-    }*/
+    if (a == undefined || a == null) this.active_event = {x:-1,y:-1,length:-1};
   }
 }
