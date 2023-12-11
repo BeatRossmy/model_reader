@@ -1,3 +1,5 @@
+// ???
+
 let grid;
 let autoencoder = null;
 var synth = new Synth(compressor);
