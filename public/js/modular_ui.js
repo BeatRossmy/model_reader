@@ -172,28 +172,74 @@ class Node_Layer extends UI_Module {
 }
 
 class Point {
-    constructor (x,y,id,props) {
+    constructor (x,y,id,parent,props) {
         this.x = x;
         this.y = y;
         this.id = id;
         this.html = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         this.update_html();
-        
-        if (Array.isArray(props)) {
-            for (let key in props)
-                if (this[key]!=undefined) this[key] = props[key];
+
+        this.on_move = () => {};
+        this.on_dblclick = () => {};
+
+        this.move = function (x,y,trigger_event) {
+            this.x = x;
+            this.y = y;
+            this.update_html();
+            if (trigger_event && this.draggable) {
+                let box = parent.getBoundingClientRect();
+                this.on_move(x/box.width,y/box.height); // <= CHANGE TO x 0-1
+            }
         }
+
+        // PROPS
+        this.draggable = true;
+        this.deletable = true;
+        if (typeof props === "object") {
+            for (const [key,value] of Object.entries(props)) {
+                console.log(key,value);
+                if (this[key]!=undefined) this[key] = value;
+            }
+        }
+
+        // EVENTLISTENER
+        let self = this;
+        // MOVE
+        if (this.draggable) {
+            this.html.addEventListener("mousedown",()=>{
+                let box = parent.getBoundingClientRect();
+                let move = (e) => {
+                    let x = (constrain(e.x,box.left,box.left+box.width)-box.left)/box.width;
+                    let y = (constrain(e.y,box.top,box.top+box.height)-box.top)/box.height;
+                    self.move(x,y,true);
+                };
+                document.addEventListener("mousemove",move);
+                document.addEventListener("mouseup",()=>{document.removeEventListener("mousemove",move)},{once:true});
+            });
+            this.html.addEventListener("touchstart",()=>{
+                let box = parent.getBoundingClientRect();
+                let move = (e) => {
+                    let touch = e.touches[0];
+                    console.log(touch);
+                    let x = (constrain(touch.clientX,box.left,box.left+box.width)-box.left)/box.width;
+                    let y = (constrain(touch.clientY,box.top,box.top+box.height)-box.top)/box.height;
+                    self.move(x,y,true);
+                };
+                document.addEventListener("touchmove",move);
+                document.addEventListener("touchend",()=>{document.removeEventListener("touchmove",move)},{once:true});
+            });
+        }
+        // DBLCLICK
+        this.html.addEventListener("dblclick",()=>{
+            if (self.deletable) self.on_dblclick(self.id);
+        });
+
+        parent.appendChild(this.html);
     }
 
     update_html = function () {
-        this.html.setAttribute("cx",this.x+"");
-        this.html.setAttribute("cy",this.y+"");
-    }
-
-    move (x,y) {
-        this.x = x;
-        this.y = y;
-        this.update_html();
+        this.html.setAttribute("cx",100*this.x+"%");
+        this.html.setAttribute("cy",100*this.y+"%");
     }
 }
 
@@ -211,22 +257,63 @@ class Line {
     }
 
     update_html = function () {
-        this.html.setAttribute("x1",this.start.x+"");
-        this.html.setAttribute("y1",this.start.y+"");
-        this.html.setAttribute("x2",this.end.x+"");
-        this.html.setAttribute("y2",this.end.y+"");
+        this.html.setAttribute("x1",100*this.start.x+"%");
+        this.html.setAttribute("y1",100*this.start.y+"%");
+        this.html.setAttribute("x2",100*this.end.x+"%");
+        this.html.setAttribute("y2",100*this.end.y+"%");
     }
 }
 
 class SVG_Layer extends UI_Module {
     constructor () {
         super("100%","100%",["svg_layer"],"svg");
+    }
+}
 
+class Poly_Line {
+    constructor (svg) {
+        this.parent = svg;
         this.points = [];
         this.lines = [];
 
+        this.on_change = () => {};
+    }
+
+    add_point (x,y) {
         let self = this;
-        this.on_event["dblclick"] = (e) => {self.add_point(e.offsetX,e.offsetY);};
+        let point = null;
+
+        if (typeof x === "object") {
+            console.log("is object",x);
+            point = x;
+        }
+        else if (typeof x === "number" && typeof y === "number") {
+            point = new Point(x,y,this.points.length,this.parent,{draggable: true, deletable: true});
+        }
+        else {
+            return;
+        }
+
+        // ADD POINT
+        point.on_move = (x,y) => {
+            self.lines.forEach((l) => {
+                if (l.start==point || l.end==point) l.update_html();
+            });
+            self.on_change();
+        };
+        point.on_dblclick = (id) => {self.remove_point(id);};
+        this.points.push(point);
+        this.parent.appendChild(point.html);
+
+        // ADD LINE
+        if (this.points.length>1) {
+            let point_start = this.points[this.points.length-2];
+            let point_end = this.points[this.points.length-1];
+            
+            let line = new Line(point_start, point_end);
+            this.lines.push(line);
+            this.parent.appendChild(line.html);
+        }
     }
 
     remove_point (id) {
@@ -234,11 +321,11 @@ class SVG_Layer extends UI_Module {
 
         // REMOVE CONNECTED LINES
         let connected_lines = this.lines.filter((l) => (l.start==point || l.end==point));
-        for (let line of connected_lines) this.html_element.removeChild(line.html);
+        for (let line of connected_lines) this.parent.removeChild(line.html);
         this.lines = this.lines.filter((l) => !(l.start==point || l.end==point));
 
         // REMOVE POINT
-        this.html_element.removeChild(point.html);
+        this.parent.removeChild(point.html);
         this.points.splice(id,1);
         this.points.forEach((point,index) => {point.id = index;});
 
@@ -248,43 +335,7 @@ class SVG_Layer extends UI_Module {
         if (point_new_start!=undefined && point_new_end!=undefined) {
             let line = new Line(point_new_start,point_new_end)
             this.lines.push(line);
-            this.html_element.appendChild(line.html);
-        }
-    }
-    
-    add_point (x,y) {
-        let self = this;
-
-        let box = this.get_bounding_box();
-
-        // ADD POINT
-        let point = new Point(x,y,this.points.length);
-        point.html.addEventListener("mousedown",()=>{
-            let move = (e) => {
-                let x = constrain(e.x,box.left,box.left+box.width)-box.left;
-                let y = constrain(e.y,box.top,box.top+box.height)-box.top;
-                point.move(x,y);
-                self.lines.forEach((l) => {
-                    if (l.start==point || l.end==point) l.update_html();
-                });
-            };
-            document.addEventListener("mousemove",move);
-            document.addEventListener("mouseup",()=>{document.removeEventListener("mousemove",move)},{once:true});
-        });
-        point.html.addEventListener("dblclick",()=>{
-            self.remove_point(point.id);
-        });
-        this.points.push(point);
-        this.html_element.appendChild(point.html);
-
-        // ADD LINE
-        if (this.points.length>1) {
-            let point_start = this.points[this.points.length-2];
-            let point_end = this.points[this.points.length-1];
-            
-            let line = new Line(point_start, point_end);
-            this.lines.push(line);
-            this.html_element.appendChild(line.html);
+            this.parent.appendChild(line.html);
         }
     }
 }
@@ -292,15 +343,30 @@ class SVG_Layer extends UI_Module {
 class Line_Module extends UI_Container {
     constructor () {
         super();
-        this.add_layer(new SVG_Layer());
+        //this.add_layer(new SVG_Layer());
+
+        this.layer = new SVG_Layer();
+        let svg = this.layer.html();
+        this.html_element.appendChild(svg);
+
+        this.line = new Poly_Line(svg);
+
+        this.layer.on_event["dblclick"] = (e) => {
+            let box = this.html_element.getBoundingClientRect()
+            let x = e.offsetX/box.width;
+            let y = e.offsetY/box.height;
+            //this.line.add_point(e.offsetX,e.offsetY);
+            console.log(x,y);
+            this.line.add_point(x,y);
+        };
     }
 
     size () {
-        return this.children[0].points.length;
+        return this.line.points.length;
     }
 
     highlight (id) {
-        this.children[0].points.forEach((p) => {
+        this.line.points.forEach((p) => {
             p.html.classList.remove("highlighted");
             if (p.id == id) p.html.classList.add("highlighted");
         });
@@ -308,7 +374,7 @@ class Line_Module extends UI_Container {
 
     get (id) {
         let box = this.get_bounding_box();
-        let point = this.children[0].points[id%this.size()];
+        let point = this.line.points[id%this.size()];
         if (point!=undefined) return {
             x: point.x/box.width,
             y: point.y/box.height
@@ -319,3 +385,44 @@ class Line_Module extends UI_Container {
         }
     }
 }
+
+class Crossfade_Module extends UI_Container {
+    constructor () {
+        super();
+
+        this.html_element.addEventListener("touchstart", (e) => {console.log(e);});
+
+        this.layer = new SVG_Layer();
+        let svg = this.layer.html();
+        this.html_element.appendChild(svg);
+
+        this.x_fade = 0.5;
+
+        this.line = new Poly_Line(svg);
+        let point_A = new Point(0.1,0.1,0,svg,{draggable: true, deletable: false});
+        let point_B = new Point(0.7,0.4,1,svg,{draggable: true, deletable: false});
+        this.line.add_point(point_A);
+        this.line.add_point(point_B);
+
+        this.point_X = new Point(lerp(point_A.x,point_B.x,this.x_fade),lerp(point_A.y,point_B.y,this.x_fade),"x_fade",svg,{draggable: false, deletable: false});
+
+        this.point_X.on_move = (x,y) => {
+            console.log("X",x,y);
+        };
+
+        this.line.on_change = () => {
+            this.point_X.move(lerp(point_A.x,point_B.x,this.x_fade),lerp(point_A.y,point_B.y,this.x_fade),true);
+        };
+    }
+
+    get () {
+        return {
+            x: this.point_X.x,
+            y: this.point_X.y
+        }
+    }
+}
+
+
+// div px/px
+// svg 100%/100%

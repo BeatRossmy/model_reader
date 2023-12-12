@@ -57,13 +57,16 @@ function custom_setup() {
   mid_container.appendChild(matrix.html());
 
   mod_ui = new Line_Module();
+  x_fade = new Crossfade_Module();
 
   mid_container.appendChild(mod_ui.html());
+  mid_container.appendChild(x_fade.html());
   
   // BOTTOM
+  
   controls = document.createElement("div");
   controls.classList.add("bottom");
-  gui.appendChild(controls);
+  top_container.appendChild(controls);
   
   sound = new ToggleButton("synth","drums");
   controls.appendChild(sound.container);
@@ -80,6 +83,7 @@ function custom_setup() {
   });
   controls.appendChild(clear.container);
   
+
   // CONNECT TO MIDI
   if (navigator.requestMIDIAccess) {
     navigator.requestMIDIAccess()

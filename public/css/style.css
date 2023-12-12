@@ -17,6 +17,8 @@ html,body {
   font-family: 'Roboto Mono', monospace;
   font-size: 1rem;
   color: var(--default);
+
+  position: fixed;
 }
 
 p {
@@ -48,12 +50,12 @@ p {
 
 circle {
   fill: var(--active);
-  r: 0.2em;
+  r: 0.5cm;
   cursor: grab;
 }
 
 circle.highlighted {
-  r: 0.4em;
+  r: 0.75em;
 }
 
 circle:hover {
